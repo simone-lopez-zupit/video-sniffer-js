@@ -178,6 +178,43 @@ describe('mediaInfoToProbe', () => {
   });
 });
 
+describe('metadati fotocamera (make/model)', () => {
+  it('mappa Encoded_Hardware_* di mediainfo su make/model (originale iPhone)', () => {
+    // Caso reale: mediainfo NON mette make/model in tag ne' in extra, ma nei
+    // campi Encoded_Hardware_*. Vanno riconosciuti come metadati fotocamera.
+    const probe = mediaInfoToProbe({
+      media: {
+        track: [
+          {
+            '@type': 'General',
+            CodecID: 'qt  ',
+            Encoded_Hardware_CompanyName: 'Apple',
+            Encoded_Hardware_Name: 'iPhone 14 Pro',
+          },
+          {
+            '@type': 'Video',
+            Format: 'HEVC',
+            Width: '1920',
+            Height: '1080',
+            BitRate: '13800000',
+            FrameRate: '30.000',
+            FrameCount: '90',
+            Duration: '3.000',
+          },
+        ],
+      },
+    });
+    expect(probe.format!.tags!.make).toBe('Apple');
+    expect(probe.format!.tags!.model).toBe('iPhone 14 Pro');
+
+    const r = classify(probe);
+    // brand qt (non generico), bitrate alto, fps 30, make/model presenti -> 0.
+    expect(r.reasons).not.toContain('Assenti metadati riconducibili alla fotocamera');
+    expect(r.score).toBe(0);
+    expect(r.classification).toBe('COMPATIBILE_CON_ORIGINALE');
+  });
+});
+
 describe('decimalAspectToRatio', () => {
   it('riconosce pixel quadrati e rapporti comuni', () => {
     expect(decimalAspectToRatio('1.000')).toBe('1:1');

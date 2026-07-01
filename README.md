@@ -49,7 +49,10 @@ decine di MB (fallback teorico).
 ### Gap gestiti in `normalize.ts`
 
 1. **Aspect ratio decimale** (`"1.778"`) → convertito in rapporto (`"16:9"`).
-2. **make/model** in `track.extra` → rimappati alle chiavi attese.
+2. **make/model.** ffprobe li espone come `com.apple.quicktime.make/model`;
+   mediainfo li consuma nei campi `Encoded_Hardware_CompanyName` /
+   `Encoded_Hardware_Name` (e in parte in `track.extra`). Li rimappiamo alle
+   chiavi attese, altrimenti un originale da fotocamera prenderebbe un +1 spurio.
 3. **Brand MP4** in `CodecID` / `CodecID_Compatible` → rimappati a
    `major_brand` / `compatible_brands`.
 4. **Nomi codec** `AVC`/`HEVC` → `h264`/`hevc`.

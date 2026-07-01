@@ -98,6 +98,25 @@ function extractCameraTags(general: MediaInfoTrack | undefined): Tags {
     if (key === 'manufacturer') tags['manufacturer'] = String(value);
     if (key.includes('com.android.version')) tags['com.android.version'] = String(value);
   }
+
+  // mediainfo NON espone i tag com.apple.quicktime.make/model come make/model
+  // (a differenza di ffprobe): li consuma nei propri campi semantici
+  // Encoded_Hardware_CompanyName ("Apple") / Encoded_Hardware_Name
+  // ("iPhone 14 Pro"), e non li lascia in `extra`. Li rimappiamo qui, altrimenti
+  // un originale da fotocamera risulterebbe "senza metadati camera" (falso +1
+  // che potrebbe far flippare COMPATIBILE->SOSPETTO al confine di soglia).
+  // Sui file ricodificati (es. ffmpeg) questi campi sono assenti: mappatura sicura.
+  const hwMake = str(general, 'Encoded_Hardware_CompanyName');
+  const hwModel = str(general, 'Encoded_Hardware_Name');
+  if (hwMake && !tags['make']) {
+    tags['make'] = hwMake;
+    tags['com.apple.quicktime.make'] = hwMake;
+  }
+  if (hwModel && !tags['model']) {
+    tags['model'] = hwModel;
+    tags['com.apple.quicktime.model'] = hwModel;
+  }
+
   return tags;
 }
 
