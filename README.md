@@ -31,20 +31,6 @@ result.reasons;        // string[] — perché
 Funziona così com'è: il motore `.wasm` viene scaricato da CDN. Il **video non
 lascia mai il browser**, si scarica solo il wasm (statico, pubblico).
 
-### Offline / self-host (opzionale)
-
-Per non usare la CDN (offline, CSP restrittive) servi il `.wasm` come asset e
-indicalo con `locateFile`. **Angular** — in `angular.json`, sotto
-`architect.build.options.assets`:
-
-```jsonc
-{ "glob": "*.wasm", "input": "node_modules/mediainfo.js/dist", "output": "assets/mediainfo" }
-```
-
-```ts
-await analyzeFile(file, { locateFile: (p) => `/assets/mediainfo/${p}` });
-```
-
 ## API
 
 | | |
