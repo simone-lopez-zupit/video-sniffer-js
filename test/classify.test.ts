@@ -148,6 +148,34 @@ describe('mediaInfoToProbe', () => {
     // +4 encoder +1 major_brand +1 compatible(tutti generici) +4 bitrate<5 +2 fps<27 +1 no-camera = 13
     expect(r.score).toBe(13);
   });
+
+  it('FPS medio (FrameCount/Duration) prevale sul FrameRate nominale', () => {
+    // Nominale 30 fps, ma la media reale e' 26 fps (260 frame in 10s): un
+    // transcode che droppa frame. ffprobe lo vedrebbe via avg_frame_rate; qui
+    // deve emergere lo stesso dal calcolo FrameCount/Duration, non dal nominale.
+    const probe = mediaInfoToProbe({
+      media: {
+        track: [
+          { '@type': 'General', CodecID: 'qt  ' },
+          {
+            '@type': 'Video',
+            Format: 'AVC',
+            Width: '1920',
+            Height: '1080',
+            BitRate: '20000000',
+            FrameRate: '30.000', // nominale: non farebbe scattare la regola FPS
+            FrameCount: '260',
+            Duration: '10.000', // media reale = 26 fps
+          },
+        ],
+      },
+    });
+    expect(probe.streams![0].avg_frame_rate).toBe('26/1');
+    const r = classify(probe);
+    // bitrate alto (nessun +), fps medio 26 < 27 -> +2, no make/model -> +1 = 3
+    expect(r.reasons).toContain('Frame rate medio anomalo (26.00 fps)');
+    expect(r.score).toBe(3);
+  });
 });
 
 describe('decimalAspectToRatio', () => {

@@ -53,6 +53,11 @@ decine di MB (fallback teorico).
 3. **Brand MP4** in `CodecID` / `CodecID_Compatible` → rimappati a
    `major_brand` / `compatible_brands`.
 4. **Nomi codec** `AVC`/`HEVC` → `h264`/`hevc`.
+5. **FPS medio vs nominale.** `ffprobe` usa `avg_frame_rate` = media reale
+   (frame totali / durata); `mediainfo.js` espone `FrameRate` (nominale). Per
+   non perdere i transcode che alterano il timing (VFR, frame droppati)
+   calcoliamo `FrameCount / Duration`, che coincide con l'`avg_frame_rate` di
+   ffprobe; se mancano, fallback al `FrameRate` nominale.
 
 ### Divergenza nota (voluta) rispetto allo script Python
 

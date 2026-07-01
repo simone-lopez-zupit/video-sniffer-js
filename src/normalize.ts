@@ -141,10 +141,24 @@ export function mediaInfoToProbe(mediaInfoResult: MediaInfoResult): Probe {
     0;
   const overallBitRate = parseInt(str(general, 'OverallBitRate'), 10) || 0;
 
-  // --- FPS: mediainfo lo da' come float diretto; lo esprimiamo come "n/1"
-  //     cosi' parseRatio() in classify.ts lo gestisce come farebbe con ffprobe. ---
-  const frameRate = parseFloat(str(videoTrack, 'FrameRate'));
-  const avgFrameRate = Number.isFinite(frameRate) ? `${frameRate}/1` : '0/0';
+  // --- FPS: ffprobe usa avg_frame_rate = media REALE (frame totali / durata),
+  //     non il frame rate nominale dichiarato. Per replicarlo calcoliamo
+  //     FrameCount / Duration (Duration e' in secondi in mediainfo): cosi' la
+  //     regola FPS di classify() reagisce ai transcode che alterano il timing
+  //     (VFR, frame droppati), che il solo valore nominale nasconderebbe.
+  //     Fallback: FrameRate nominale. Lo esprimiamo come "n/1" cosi' parseRatio()
+  //     in classify.ts lo gestisce come farebbe con l'output di ffprobe. ---
+  const frameCount = parseFloat(str(videoTrack, 'FrameCount'));
+  const durationSec = parseFloat(str(videoTrack, 'Duration'));
+  const nominalFps = parseFloat(str(videoTrack, 'FrameRate'));
+
+  let avgFps: number | null = null;
+  if (frameCount > 0 && durationSec > 0) {
+    avgFps = frameCount / durationSec;
+  } else if (Number.isFinite(nominalFps) && nominalFps > 0) {
+    avgFps = nominalFps;
+  }
+  const avgFrameRate = avgFps !== null ? `${avgFps}/1` : '0/0';
 
   const formatTags: Tags = {
     encoder,
